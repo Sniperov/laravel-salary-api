@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Salary;
 use App\Models\Tax;
 use App\Http\Requests\SalaryRequest;
+use App\Http\Resources\SalaryResource;
 use SalaryService;
 
 class SalaryController extends Controller
@@ -15,11 +16,11 @@ class SalaryController extends Controller
         $data = $request->validated();
         $invalidGroup = array_key_exists('invalid_group',$data) ? $data['invalid_group'] : null;
 
-        return response()->json(
+        return new SalaryResource(
             SalaryService::calculateTaxes(
-                $data['salary'], 
-                $data['tax_ms'], 
-                $data['is_pensioner'], 
+                $data['salary'],
+                $data['tax_ms'],
+                $data['is_pensioner'],
                 $data['is_invalid'],
                 $invalidGroup
             )
@@ -34,13 +35,13 @@ class SalaryController extends Controller
 
         $data['salary'] = $calculated['finalSalary'];
         $salary = Salary::create($data);
-        
+
         $taxes = $calculated['taxes'];
         $taxes['salary_id'] = $salary->id;
 
         $tax = Tax::create($taxes);
 
-        return response()->json($calculated);
+        return new SalaryResource($calculated);
     }
 
 }
